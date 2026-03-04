@@ -6,3 +6,5 @@ def get_llm():
         model=MODEL_NAME,
         temperature=TEMPERATURE
     )
+
+llm = get_llm()

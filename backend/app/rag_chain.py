@@ -1,34 +1,57 @@
-from app.vector_store import get_vector_store
-from app.llm import get_llm
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory
+
+from app.vector_store import vectorstore
+from app.llm import llm
+
+from app.vector_store import vectorstore
+from app.llm import llm
 from app.prompts import RAG_PROMPT
-from app.security import is_safe_question
+
+system_prompt = (
+    "Tu es un assistant IA professionnel. Réponds uniquement à partir du contexte fourni. "
+    "Si tu ne sais pas, dis que tu ne trouves pas l'information.\n\n"
+    "{context}"
+)
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", system_prompt),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{input}"),
+])
+
+question_answer_chain = create_stuff_documents_chain(llm, prompt)
+
+retrieval_chain = create_retrieval_chain(vectorstore.as_retriever(), question_answer_chain)
+
+demo_ephemeral_chat_history_for_chain = ChatMessageHistory()
+
+def get_session_history(session_id: str):
+    return demo_ephemeral_chat_history_for_chain
+
+conversational_rag_chain = RunnableWithMessageHistory(
+    retrieval_chain,
+    get_session_history,
+    input_messages_key="input",
+    history_messages_key="chat_history",
+    output_messages_key="answer",
+)
 
 def ask_question(question: str):
-    # Security
-    if not is_safe_question(question):
-        return "Votre question contient un contenu non autorisé."
-
-    # Get vector store
-    vector_store = get_vector_store()
-
-    # Get similar documents
-    results = vector_store.similarity_search(question, k=3)
-
-    # No results
-    if not results:
-        return "Je ne trouve pas l'information dans les documents fournis."
-
-    # Create context
-    context = "\n\n".join([doc.page_content for doc in results])
-
-    # Create prompt
-    prompt = RAG_PROMPT.format(
-        context=context,
-        question=question
+    response = conversational_rag_chain.invoke(
+        {"input": question},
+        config={"configurable": {"session_id": "default"}}
     )
+    return response["answer"]
 
-    # Invoke LLM
-    llm = get_llm()
-    response = llm.invoke(prompt)
-
-    return response
+def stream_answer(question: str):
+    for chunk in conversational_rag_chain.stream(
+        {"input": question},
+        config={"configurable": {"session_id": "default"}}
+    ):
+        if "answer" in chunk:
+            yield chunk["answer"]
