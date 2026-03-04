@@ -1,43 +1,31 @@
 from app.document_loader import load_text, split_documents
-from app.llm import get_llm
-from app.prompts import RAG_PROMPT
 from app.vector_store import get_vector_store
+from app.rag_chain import ask_question
 
-def test_llm():
-    llm = get_llm()
-
-    prompt = RAG_PROMPT.format(
-        context="Un RAG est un système qui combine recherche documentaire et LLM.",
-        question="Qu'est-ce qu'un RAG ?"
-    )
-
-    response = llm.invoke(prompt)
-
-    print("\n=== RESPONSE ===\n")
-    print(response)
-
-def test_vector_store():
+def setup_demo_data():
     text = """
     Le RAG (Retrieval Augmented Generation) est une architecture
     combinant recherche documentaire et modèles de langage.
-    Il permet de réduire les hallucinations.
+    Il permet de réduire les hallucinations en injectant du contexte pertinent.
     """
 
     docs = load_text(text)
     chunks = split_documents(docs)
 
     vector_store = get_vector_store()
-
     vector_store.add_documents(chunks)
 
-    results = vector_store.similarity_search("Comment réduire les hallucinations ?", k=2)
+def test_rag():
+    question = "Comment le RAG reduit-il les hallucinations ?"
 
-    print("\n=== RESULTS ===\n")
+    answer = ask_question(question)
 
-    for r in results:
-        print(r.page_content)
-        print("------")
+    print("\n=== QUESTION ===\n")
+    print(question)
+
+    print("\n=== ANSWER ===\n")
+    print(answer)
 
 if __name__ == "__main__":
-    #test_llm()
-    test_vector_store()
+    setup_demo_data()
+    test_rag()
