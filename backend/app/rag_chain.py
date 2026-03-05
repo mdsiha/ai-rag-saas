@@ -8,10 +8,6 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from app.vector_store import vectorstore
 from app.llm import llm
 
-from app.vector_store import vectorstore
-from app.llm import llm
-from app.prompts import RAG_PROMPT
-
 system_prompt = (
     "Tu es un assistant IA professionnel. Réponds uniquement à partir du contexte fourni. "
     "Si tu ne sais pas, dis que tu ne trouves pas l'information.\n\n"

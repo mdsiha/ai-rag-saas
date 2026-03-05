@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 import shutil
 import os
-from app.schemas import IndexRequest, ChatRequest, ChatResponse
+from app.schemas import ChatRequest, ChatResponse
 from app.indexer import index_pdf_file
 from app.rag_chain import ask_question, stream_answer
 from app.security import is_safe_question
@@ -11,11 +11,6 @@ router = APIRouter()
 
 UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../uploads"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-@router.post("/index")
-def index_document(request: IndexRequest):
-    chunks = index_text(request.text)
-    return {"message": f"{chunks} chunks indexed successfully."}
 
 @router.post("/chat")
 def chat(request: ChatRequest):
