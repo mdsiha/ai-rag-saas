@@ -30,9 +30,9 @@ def chat_stream(request: ChatRequest):
 
     def generate():
         for chunk in stream_answer(request.question):
-            yield chunk
+            yield f"data: {chunk}\n\n"
         
-    return StreamingResponse(generate(), media_type="text/plain")
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 @router.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
