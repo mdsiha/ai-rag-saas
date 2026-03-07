@@ -8,7 +8,14 @@ export const uploadFile = async (file: File) => {
     method: "POST",
     body: formData,
   });
-  return response;
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || data.message || "Erreur serveur");
+  }
+
+  return data;
 };
 
 export const chatStream = async (

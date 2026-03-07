@@ -13,7 +13,7 @@ router = APIRouter()
 UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../uploads"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-MAX_FILE_SIZE = 10 * 1024 * 1024 # 10Mo
+MAX_FILE_SIZE = 10 * 1024 * 1024 # 10MB limit
 
 @router.post("/chat")
 def chat(request: ChatRequest):
@@ -36,29 +36,30 @@ def chat_stream(request: ChatRequest):
 
 @router.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
-    logger.info(f"Received file: {file.filename}")
+    logger.info(f"Processing upload for: {file.filename}")
+
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Invalid format. Only PDF files are allowed.")
 
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
-        logger.warning(f"File {file.filename} is too large.")
-        raise HTTPException(status_code=413, detail="File is too large.")
+        logger.warning(f"File {file.filename} exceeds 10MB limit.")
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
 
-    await file.seek(0)
-
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
-    
     file_path = os.path.join(UPLOAD_DIR, file.filename)
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
     try:
+        with open(file_path, "wb") as buffer:
+            buffer.write(contents)
+
         num_chunks = index_pdf_file(file_path)
         return {
             "filename": file.filename,
             "status": "success",
             "chunks_indexed": num_chunks,
         }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error indexing file : {str(e)}")
+        logger.error(f"Critical error during indexing: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred while processing the document.")
