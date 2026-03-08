@@ -1,10 +1,43 @@
+from langchain_groq import ChatGroq
+from langchain_openai import AzureChatOpenAI
 from langchain_ollama import OllamaLLM
-from .config import MODEL_NAME, TEMPERATURE
+from app.config import settings
+from app.logger import logger
 
 def get_llm():
-    return OllamaLLM(
-        model=MODEL_NAME,
-        temperature=TEMPERATURE
-    )
+    """
+    Factory to retrieve the configured LLM.
+    This approach allows easy switching between providers without refactoring.
+    """
+    provider = settings.AI_PROVIDER.lower()
 
-llm = get_llm()
+    try:
+        if provider == "groq":
+            if not settings.GROQ_API_KEY:
+                raise ValueError("GROQ_API_KEY missing in .env")
+            logger.info(f"LLM Engine: Groq ({settings.GROQ_MODEL})")
+            return ChatGroq(
+                model=settings.GROQ_MODEL,
+                api_key=settings.GROQ_API_KEY,
+                temperature=settings.TEMPERATURE
+            )
+
+        elif provider == "azure":
+            if not settings.AZURE_OPENAI_API_KEY:
+                raise ValueError("AZURE_OPENAI_API_KEY missing")
+            logger.info(f"LLM Engine: Azure OpenAI ({settings.AZURE_OPENAI_DEPLOYMENT})")
+            return AzureChatOpenAI(
+                azure_deployment=settings.AZURE_OPENAI_DEPLOYMENT,
+                api_key=settings.AZURE_OPENAI_API_KEY,
+                azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+                api_version="2024-02-15-preview",
+                temperature=settings.TEMPERATURE
+            )
+
+        logger.info(f"LLM Engine: Ollama Local ({settings.MODEL_NAME})")
+        return OllamaLLM(model=settings.MODEL_NAME, temperature=settings.TEMPERATURE)
+
+    except Exception as e:
+        logger.error(f"Failed to initialize LLM provider {provider}: {e}")
+        # Security fallback to local Ollama to prevent API crash
+        return OllamaLLM(model="mistral")
