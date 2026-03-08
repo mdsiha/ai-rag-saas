@@ -14,16 +14,15 @@ export default function FileUpload() {
   const handleUpload = async () => {
     if (!file) return;
     setStatus("uploading");
+    setMessage("");
+
     try {
-      const result: any = await uploadFile(file);
-      if (result.status === "success") {
-        setStatus("success");
-        setMessage(`${result.chunks_indexed} extraits indexés.`);
-        setFile(null);
-      }
-    } catch (err) {
+      const result = await uploadFile(file);
+      setStatus("success");
+      setMessage(`${result.chunks_indexed} chunks indexed successfully.`);
+    } catch (err: any) {
       setStatus("error");
-      setMessage("Erreur d'upload.");
+      setMessage(err.message || "An error occurred while uploading the file.");
     }
   };
 
@@ -59,7 +58,7 @@ export default function FileUpload() {
           className="w-full bg-slate-900 hover:bg-slate-800"
         >
           {status === "uploading" ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Indexation...</>
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Indexing...</>
           ) : "Analyze the document "}
         </Button>
 

@@ -35,6 +35,13 @@ export default function ChatBox() {
         updated[updated.length - 1].content = aiResponse;
         return updated;
       });
+
+    }, (error) => {
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1].content = error;
+        return updated;
+      });
     });
   };
 
@@ -43,7 +50,7 @@ export default function ChatBox() {
       <CardHeader className="border-b bg-slate-50/50 py-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Bot className="w-5 h-5 text-blue-600" />
-          IA Assistant
+          AI Assistant
         </CardTitle>
       </CardHeader>
       
