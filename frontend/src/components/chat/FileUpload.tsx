@@ -1,66 +1,75 @@
 "use client";
 import { useState } from "react";
 import { uploadFile } from "@/src/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { UploadCloud, FileText, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function FileUpload() {
-    const [file, setFile] = useState<File | null>(null);
-    const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
-    const [message, setMessage] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
 
-    const handleUpload = async () => {
-        if (!file) return;
+  const handleUpload = async () => {
+    if (!file) return;
+    setStatus("uploading");
+    try {
+      const result: any = await uploadFile(file);
+      if (result.status === "success") {
+        setStatus("success");
+        setMessage(`${result.chunks_indexed} extraits indexés.`);
+        setFile(null);
+      }
+    } catch (err) {
+      setStatus("error");
+      setMessage("Erreur d'upload.");
+    }
+  };
 
-        setStatus("uploading");
-        try {
-            const result: any = await uploadFile(file);
-            if (result.status === "success") {
-                setStatus("success");
-                setMessage(`File uploaded successfully. Chunks indexed: ${result.chunks_indexed}`);
-                setFile(null);
-            } else {
-                throw new Error(result.detail || "Unknown error");
-            }
-        } catch (err) {
-            setStatus("error");
-            setMessage("Error uploading file.");
-            console.error(err);
-        }
-    };
+  return (
+    <Card className="shadow-md">
+      <CardHeader>
+        <CardTitle className="text-md flex items-center gap-2">
+          <FileText className="w-5 h-5 text-blue-600" />
+          Documents
+        </CardTitle>
+        <CardDescription>Upload your PDF for the RAG</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="group relative border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center transition-colors hover:border-blue-400 hover:bg-blue-50/50">
+          <input
+            type="file"
+            accept=".pdf"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            onChange={(e) => {
+                setFile(e.target.files?.[0] || null);
+                setStatus("idle");
+            }}
+          />
+          <UploadCloud className="w-10 h-10 text-slate-400 mb-2 group-hover:text-blue-500 transition-colors" />
+          <p className="text-xs font-medium text-slate-600 text-center">
+            {file ? <span className="text-blue-600">{file.name}</span> : "Drag your PDF or click here"}
+          </p>
+        </div>
 
-    return (
-    <div className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-      <h3 className="font-semibold text-gray-700">Knowledge Base</h3>
-      
-      <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg p-6 hover:border-blue-400 transition bg-gray-50">
-        <input
-          type="file"
-          accept=".pdf"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="hidden"
-          id="file-upload"
-        />
-        <label htmlFor="file-upload" className="cursor-pointer text-center">
-          <span className="text-blue-600 font-medium">Choose a file</span>
-          <p className="text-xs text-gray-400 mt-1">Only PDF (Max 10Mo)</p>
-        </label>
-        {file && <p className="mt-2 text-sm font-bold text-gray-600">{file.name}</p>}
-      </div>
+        <Button 
+          onClick={handleUpload} 
+          disabled={!file || status === "uploading"} 
+          className="w-full bg-slate-900 hover:bg-slate-800"
+        >
+          {status === "uploading" ? (
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Indexation...</>
+          ) : "Analyze the document "}
+        </Button>
 
-      <button
-        onClick={handleUpload}
-        disabled={!file || status === "uploading"}
-        className={`w-full py-2 rounded-lg font-medium transition ${
-          status === "uploading" ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700 text-white"
-        }`}
-      >
-        {status === "uploading" ? "Uploading..." : "Upload"}
-      </button>
-
-      {message && (
-        <p className={`text-xs text-center ${status === "success" ? "text-green-600" : "text-red-500"}`}>
-          {message}
-        </p>
-      )}
-    </div>
+        {status !== "idle" && (
+          <Badge variant={status === "success" ? "secondary" : "destructive"} className="w-full py-1 justify-center gap-2">
+            {status === "success" ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+            {message}
+          </Badge>
+        )}
+      </CardContent>
+    </Card>
   );
 }
