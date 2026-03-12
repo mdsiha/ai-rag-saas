@@ -1,6 +1,6 @@
 from langchain_groq import ChatGroq
 from langchain_openai import AzureChatOpenAI
-from langchain_ollama import OllamaLLM
+
 from app.config import settings
 from app.logger import logger
 
@@ -33,11 +33,9 @@ def get_llm():
                 api_version="2024-02-15-preview",
                 temperature=settings.TEMPERATURE
             )
-
-        logger.info(f"LLM Engine: Ollama Local ({settings.MODEL_NAME})")
-        return OllamaLLM(model=settings.MODEL_NAME, temperature=settings.TEMPERATURE)
+        else:
+            raise ValueError(f"Unsupported AI_PROVIDER: {provider}")
 
     except Exception as e:
         logger.error(f"Failed to initialize LLM provider {provider}: {e}")
-        # Security fallback to local Ollama to prevent API crash
-        return OllamaLLM(model="mistral")
+        raise e

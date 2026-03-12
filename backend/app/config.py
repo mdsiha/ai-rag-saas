@@ -3,7 +3,7 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # Provider choice: "groq", "azure", "ollama"
+    # Provider choice: "groq", "azure"
     AI_PROVIDER: str = os.getenv("AI_PROVIDER", "groq")
 
     # Groq Configuration
@@ -14,9 +14,6 @@ class Settings(BaseSettings):
     AZURE_OPENAI_API_KEY: str = os.getenv("AZURE_OPENAI_API_KEY", "")
     AZURE_OPENAI_ENDPOINT: str = os.getenv("AZURE_OPENAI_ENDPOINT", "")
     AZURE_OPENAI_DEPLOYMENT: str = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
-
-    # Local Ollama (Fallback)
-    MODEL_NAME: str = os.getenv("MODEL_NAME", "mistral:7b-instruct")
 
     # Common Parameters
     TEMPERATURE: float = 0.2
