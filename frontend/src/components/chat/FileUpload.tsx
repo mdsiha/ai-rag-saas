@@ -20,9 +20,13 @@ export default function FileUpload() {
       const result = await uploadFile(file);
       setStatus("success");
       setMessage(`${result.chunks_indexed} chunks indexed successfully.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus("error");
-      setMessage(err.message || "An error occurred while uploading the file.");
+      if (err instanceof Error) {
+        setMessage(err.message || "An error occurred while uploading the file.");
+      } else {
+        setMessage("An error occurred while uploading the file.");
+      }
     }
   };
 
