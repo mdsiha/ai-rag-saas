@@ -16,6 +16,8 @@ node_modules/
 
 # Database
 chroma_db/
+users.db
+*.sqlite3
 
 # Upload
 uploads/*
