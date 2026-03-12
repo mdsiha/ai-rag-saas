@@ -24,7 +24,7 @@ export default function Home() {
             <h4 className="text-sm font-bold text-blue-800 mb-1">System Status</h4>
             <div className="flex items-center gap-2 text-xs text-blue-600">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Ollama (Mistral) Connected
+              Cloud LLM Connected
             </div>
           </div>
         </aside>
