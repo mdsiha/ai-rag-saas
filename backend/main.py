@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.api import router
+from app.api import router as rag_router
+from app.auth import router as auth_router
 from app.logger import logger
 
 app = FastAPI(
@@ -27,12 +28,13 @@ app.add_middleware(
 async def health_check():
     return {"status": "healthy", "service": "ai-rag-backend"}
 
-app.include_router(router)
+app.include_router(auth_router)
+app.include_router(rag_router)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"ERREUR CRITIQUE: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={"message": "Une erreur inattendue est survenue."}
+        content={"message": "An unexpected error occurred."}
     )

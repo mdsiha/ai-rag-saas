@@ -1,11 +1,12 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 import shutil
 import os
 from app.schemas import ChatRequest, ChatResponse
 from app.indexer import index_pdf_file
 from app.rag_chain import ask_question, stream_answer
-from app.security import is_safe_question
+from app.security import is_safe_question, get_current_user
+from app.database import User
 from app.logger import logger
 
 router = APIRouter()
@@ -16,7 +17,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 @router.post("/chat")
-def chat(request: ChatRequest):
+def chat(request: ChatRequest, current_user: User = Depends(get_current_user)):
     if not is_safe_question(request.question):
         raise HTTPException(status_code=400, detail="Security violation: unsafe query detected.")
     
@@ -28,7 +29,7 @@ def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail="The AI failed to respond. Please check LLM connectivity.")
 
 @router.post("/chat/stream")
-def chat_stream(request: ChatRequest):
+def chat_stream(request: ChatRequest, current_user: User = Depends(get_current_user)):
     if not is_safe_question(request.question):
         raise HTTPException(status_code=400, detail="Security violation: unsafe query detected.")
 
@@ -43,7 +44,7 @@ def chat_stream(request: ChatRequest):
     return StreamingResponse(generate(), media_type="text/event-stream")
 
 @router.post("/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     logger.info(f"Upload received: {file.filename}")
 
     if not file.filename.lower().endswith(".pdf"):
