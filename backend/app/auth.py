@@ -9,7 +9,7 @@ import os
 
 router = APIRouter(tags=["Authentication"])
 
-@router.post("/register", status_code=HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
