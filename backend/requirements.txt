@@ -18,8 +18,10 @@ cuda-bindings==12.9.4
 cuda-pathfinder==1.4.0
 dataclasses-json==0.6.7
 distro==1.9.0
+dnspython==2.8.0
 durationpy==0.10
 ecdsa==0.19.1
+email-validator==2.3.0
 fastapi==0.135.1
 filelock==3.25.0
 flatbuffers==25.12.19
@@ -101,7 +103,6 @@ orjson==3.11.7
 ormsgpack==1.12.2
 overrides==7.7.0
 packaging==24.2
-passlib==1.7.4
 posthog==5.4.0
 propcache==0.4.1
 protobuf==6.33.5
