@@ -19,3 +19,12 @@ jobs:
           docker build ./frontend \
             --build-arg NEXT_PUBLIC_API_URL=https://api-ai-rag.md-x.dev \
             -t ai-rag-frontend
+
+  deploy:
+    needs: test-docker-builds
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Coolify Deployment
+        run: |
+          curl -X GET "${{ secrets.COOLIFY_WEBHOOK }}"
