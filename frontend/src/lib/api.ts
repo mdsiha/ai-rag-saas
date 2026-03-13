@@ -6,6 +6,15 @@ const getAuthHeaders = (): Record<string, string> => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+export const getStats = async () => {
+  const response = await fetch(`${API_URL}/stats`, {
+    headers: { ...getAuthHeaders() },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || "Failed to fetch stats.");
+  return data;
+};
+
 export const login = async (email: string, password: string) => {
   const formData = new URLSearchParams();
   formData.append("username", email);
@@ -64,13 +73,14 @@ export const uploadFile = async (file: File) => {
 export const chatStream = async (
   question: string,
   onChunk: (chunk: string) => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
+  fileFilter: string | null = null
 ) => {
   try {
     const response = await fetch(`${API_URL}/chat/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, file_filter: fileFilter }),
     });
 
     if (response.status === 401) {
