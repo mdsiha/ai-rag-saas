@@ -38,7 +38,7 @@ def chat(request: ChatRequest, current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="Security violation: unsafe query detected.")
     
     try:
-        answer = ask_question(request.question, user_id=current_user.id, filter_filter=request.file_filter)
+        answer = ask_question(request.question, user_id=current_user.id, file_filter=request.file_filter)
         return ChatResponse(answer=answer)
     except Exception as e:
         logger.error(f"Chat Error: {e}")
@@ -51,7 +51,7 @@ def chat_stream(request: ChatRequest, current_user: User = Depends(get_current_u
 
     def generate():
         try:
-            for chunk in stream_answer(request.question, user_id=current_user.id, filter_filter=request.file_filter):
+            for chunk in stream_answer(request.question, user_id=current_user.id, file_filter=request.file_filter):
                 yield f"data: {chunk}\n\n"
         except Exception as e:
             logger.error(f"Stream Error: {e}")

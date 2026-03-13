@@ -72,12 +72,12 @@ def ask_question(question: str, user_id: int, file_filter: str = None):
     )
     return response["answer"]
 
-def stream_answer(question: str, user_id: int, filter_filter: str = None):
+def stream_answer(question: str, user_id: int, file_filter: str = None):
     chain = get_conversational_chain()
 
     search_filter = {"user_id", user_id}
 
-    if filter_filter:
+    if file_filter:
         search_filter = {
             "$and": [
                 {"user_id": user_id},
