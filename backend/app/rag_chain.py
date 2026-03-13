@@ -9,36 +9,41 @@ from app.llm import get_llm
 from app.logger import logger
 
 _chain = None
-
 chat_histories = {}
+
 
 def get_session_history(session_id: str):
     if session_id not in chat_histories:
         chat_histories[session_id] = ChatMessageHistory()
     return chat_histories[session_id]
 
+
 def get_conversational_chain():
     global _chain
     if _chain is None:
-        logger.info("Initializing RAG Chain (this might take a moment the first time)...")
+        logger.info(
+            "Initializing RAG Chain (this might take a moment the first time)..."
+        )
         llm_instance = get_llm()
-        
+
         system_prompt = (
             "You are a professional AI assistant. Answer strictly based on the provided context. "
             "If you do not know the answer, state that you cannot find the information in the documents.\n\n"
             "Context:\n{context}"
         )
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}"),
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                MessagesPlaceholder(variable_name="chat_history"),
+                ("human", "{input}"),
+            ]
+        )
 
         question_answer_chain = create_stuff_documents_chain(llm_instance, prompt)
         vector_store = get_vector_store()
         retriever = vector_store.as_retriever(search_kwargs={"k": 5})
-        
+
         retrieval_chain = create_retrieval_chain(retriever, question_answer_chain)
 
         _chain = RunnableWithMessageHistory(
@@ -50,47 +55,39 @@ def get_conversational_chain():
         )
     return _chain
 
+
 def ask_question(question: str, user_id: int, file_filter: str = None):
     chain = get_conversational_chain()
 
     search_filter = {"user_id": user_id}
 
     if file_filter:
-        search_filter = {
-            "$and": [
-                {"user_id": user_id},
-                {"source": file_filter}
-            ]
-        }
+        search_filter = {"$and": [{"user_id": user_id}, {"source": file_filter}]}
 
     response = chain.invoke(
         {"input": question},
         config={
             "configurable": {"session_id": f"user_{user_id}"},
-            "search_kwargs": {"filter": {"user_id": user_id}}
-        }
+            "search_kwargs": {"filter": search_filter},
+        },
     )
     return response["answer"]
+
 
 def stream_answer(question: str, user_id: int, file_filter: str = None):
     chain = get_conversational_chain()
 
-    search_filter = {"user_id", user_id}
+    search_filter = {"user_id": user_id}
 
     if file_filter:
-        search_filter = {
-            "$and": [
-                {"user_id": user_id},
-                {"source": file_filter}
-            ]
-        }
+        search_filter = {"$and": [{"user_id": user_id}, {"source": file_filter}]}
 
     for chunk in chain.stream(
         {"input": question},
         config={
             "configurable": {"session_id": f"user_{user_id}"},
-            "search_kwargs": {"filter": {"user_id": user_id}}
-        }
+            "search_kwargs": {"filter": search_filter},
+        },
     ):
         answer_chunk = chunk.get("answer")
         if answer_chunk:
