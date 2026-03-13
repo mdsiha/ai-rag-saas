@@ -6,7 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { UploadCloud, FileText, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
-export default function FileUpload() {
+interface FileUploadProps {
+  onUploadSuccess?: () => void;
+}
+
+export default function FileUpload({onUploadSuccess}: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -20,6 +24,16 @@ export default function FileUpload() {
       const result = await uploadFile(file);
       setStatus("success");
       setMessage(`${result.chunks_indexed} chunks indexed successfully.`);
+
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
+
+      setTimeout(() => {
+        setFile(null);
+        setStatus("idle");
+        setMessage("");
+      }, 3000);
     } catch (err: unknown) {
       setStatus("error");
       if (err instanceof Error) {
@@ -46,13 +60,14 @@ export default function FileUpload() {
             accept=".pdf"
             className="absolute inset-0 opacity-0 cursor-pointer"
             onChange={(e) => {
-                setFile(e.target.files?.[0] || null);
-                setStatus("idle");
+              setFile(e.target.files?.[0] || null);
+              setStatus("idle");
             }}
+            disabled={status === "uploading"}
           />
-          <UploadCloud className="w-10 h-10 text-slate-400 mb-2 group-hover:text-blue-500 transition-colors" />
+          <UploadCloud className={`w-10 h-10 mb-2 transition-colors ${file ? "text-blue-500" : "text-slate-400 group-hover:text-blue-500"}`} />
           <p className="text-xs font-medium text-slate-600 text-center">
-            {file ? <span className="text-blue-600">{file.name}</span> : "Drag your PDF or click here"}
+            {file ? <span className="text-blue-600 font-bold">{file.name}</span> : "Drag your PDF or click here"}
           </p>
         </div>
 
@@ -63,12 +78,12 @@ export default function FileUpload() {
         >
           {status === "uploading" ? (
             <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Indexing...</>
-          ) : "Analyze the document "}
+          ) : "Analyze the document"}
         </Button>
 
         {status !== "idle" && (
           <Badge variant={status === "success" ? "secondary" : "destructive"} className="w-full py-1 justify-center gap-2">
-            {status === "success" ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+            {status === "success" ? <CheckCircle2 className="w-3 h-3 text-green-600" /> : <AlertCircle className="w-3 h-3" />}
             {message}
           </Badge>
         )}

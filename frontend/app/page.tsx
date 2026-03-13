@@ -16,6 +16,15 @@ export default function Home() {
   const [files, setFiles] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
+  const refreshStats = async () => {
+    try {
+      const stats = await getStats();
+      setFiles(stats.files);
+    } catch (e) {
+      console.error("Failed to load library", e);
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
@@ -23,12 +32,7 @@ export default function Home() {
         router.push("/login");
       } else {
         setIsAuthenticated(true);
-        try {
-          const stats = await getStats();
-          setFiles(stats.files);
-        } catch (error) {
-          console.error("Error fetching stats:", error);
-        }
+        refreshStats();
       }
     };
     
@@ -63,7 +67,7 @@ export default function Home() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <aside className="lg:col-span-1 space-y-6">
-          <FileUpload />
+          <FileUpload onUploadSuccess={refreshStats} />
           
           <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
             <div className="p-3 bg-slate-50 border-b font-bold text-sm flex items-center gap-2">
