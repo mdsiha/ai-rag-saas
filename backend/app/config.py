@@ -9,13 +9,15 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
 
     # Cors Settings
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000"]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v):
-        if isinstance(v, str):
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
+        elif isinstance(v, list):
+            return v
         return v
 
     # Auth
