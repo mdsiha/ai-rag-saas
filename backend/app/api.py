@@ -22,7 +22,7 @@ def chat(request: ChatRequest, current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="Security violation: unsafe query detected.")
     
     try:
-        answer = ask_question(request.question)
+        answer = ask_question(request.question, user_id=current_user.id)
         return ChatResponse(answer=answer)
     except Exception as e:
         logger.error(f"Chat Error: {e}")
@@ -35,7 +35,7 @@ def chat_stream(request: ChatRequest, current_user: User = Depends(get_current_u
 
     def generate():
         try:
-            for chunk in stream_answer(request.question):
+            for chunk in stream_answer(request.question, user_id=current_user.id):
                 yield f"data: {chunk}\n\n"
         except Exception as e:
             logger.error(f"Stream Error: {e}")
@@ -46,6 +46,9 @@ def chat_stream(request: ChatRequest, current_user: User = Depends(get_current_u
 @router.post("/upload")
 async def upload_document(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     logger.info(f"Upload received: {file.filename}")
+
+    user_upload_dir = os.path.join(UPLOAD_DIR, f"user_{current_user.id}")
+    os.makedirs(user_upload_dir, exist_ok=True)
 
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Invalid format. Only PDF files are allowed.")
@@ -60,7 +63,7 @@ async def upload_document(file: UploadFile = File(...), current_user: User = Dep
         with open(file_path, "wb") as buffer:
             buffer.write(contents)
 
-        num_chunks = index_pdf_file(file_path)
+        num_chunks = index_pdf_file(file_path, user_id=current_user.id)
         return {
             "filename": file.filename,
             "status": "success",

@@ -50,19 +50,25 @@ def get_conversational_chain():
         )
     return _chain
 
-def ask_question(question: str):
+def ask_question(question: str, user_id: int):
     chain = get_conversational_chain()
     response = chain.invoke(
         {"input": question},
-        config={"configurable": {"session_id": "default"}}
+        config={
+            "configurable": {"session_id": f"user_{user_id}"},
+            "search_kwargs": {"filter": {"user_id": user_id}}
+        }
     )
     return response["answer"]
 
-def stream_answer(question: str):
+def stream_answer(question: str, user_id: int):
     chain = get_conversational_chain()
     for chunk in chain.stream(
         {"input": question},
-        config={"configurable": {"session_id": "default"}}
+        config={
+            "configurable": {"session_id": f"user_{user_id}"},
+            "search_kwargs": {"filter": {"user_id": user_id}}
+        }
     ):
         answer_chunk = chunk.get("answer")
         if answer_chunk:
