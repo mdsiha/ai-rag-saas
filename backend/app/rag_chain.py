@@ -50,8 +50,19 @@ def get_conversational_chain():
         )
     return _chain
 
-def ask_question(question: str, user_id: int):
+def ask_question(question: str, user_id: int, file_filter: str = None):
     chain = get_conversational_chain()
+
+    search_filter = {"user_id": user_id}
+
+    if file_filter:
+        search_filter = {
+            "$and": [
+                {"user_id": user_id},
+                {"source": file_filter}
+            ]
+        }
+
     response = chain.invoke(
         {"input": question},
         config={
@@ -61,8 +72,19 @@ def ask_question(question: str, user_id: int):
     )
     return response["answer"]
 
-def stream_answer(question: str, user_id: int):
+def stream_answer(question: str, user_id: int, filter_filter: str = None):
     chain = get_conversational_chain()
+
+    search_filter = {"user_id", user_id}
+
+    if filter_filter:
+        search_filter = {
+            "$and": [
+                {"user_id": user_id},
+                {"source": file_filter}
+            ]
+        }
+
     for chunk in chain.stream(
         {"input": question},
         config={

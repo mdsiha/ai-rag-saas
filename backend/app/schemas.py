@@ -1,7 +1,9 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 class ChatRequest(BaseModel):
     question: str
+    file_filter: Optional[str] = None
 
 class ChatResponse(BaseModel):
     answer: str
